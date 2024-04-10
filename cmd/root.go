@@ -12,12 +12,14 @@ import (
 	"github.com/BourgeoisBear/rasterm"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/RedHatNordicsSA/redhatsay/assets"
 )
 
 var (
 	vintage bool
+	think   bool
 	text    string
 	err     error
 )
@@ -38,6 +40,9 @@ var rootCmd = &cobra.Command{
 		if len(args) > 0 {
 			text = strings.Join(args, "\n")
 		} else {
+			if terminal.IsTerminal(0) {
+				cobra.CheckErr(fmt.Errorf("no text provided"))
+			}
 			reader := cmd.InOrStdin()
 			buf := new(strings.Builder)
 			_, err = io.Copy(buf, reader)
@@ -51,8 +56,13 @@ var rootCmd = &cobra.Command{
 		styleSay := lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FF0000")).
 			Bold(true)
-		fmt.Println(styleSay.Render("     \\"))
-		fmt.Print(styleSay.Render("      \\"))
+		if think {
+			fmt.Println(styleSay.Render("     o"))
+			fmt.Print(styleSay.Render("      o"))
+		} else {
+			fmt.Println(styleSay.Render("     \\"))
+			fmt.Print(styleSay.Render("      \\"))
+		}
 		// if vintage flag is set, use the vintage Red Hat logo
 		// otherwise, use the modern Red Hat logo
 		var file string
@@ -85,15 +95,10 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.redhatsay.yaml)")
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	// --vintage flag to use the vintage Red Hat logo
 	rootCmd.Flags().BoolVarP(&vintage, "vintage", "v", false, "Use the vintage Red Hat logo")
+	// --think flag to make the Red Hat think instead of say
+	rootCmd.Flags().BoolVarP(&think, "think", "t", false, "Make the Red Hat think instead of say")
 }
